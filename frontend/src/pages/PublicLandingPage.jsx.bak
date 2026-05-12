@@ -1,0 +1,127 @@
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+export default function PublicLandingPage() {
+  const navigate = useNavigate()
+
+  const amenities = [
+    { icon: '🌊', label: 'River View', desc: 'Beautiful views of the Nainital region' },
+    { icon: '🏞️', label: 'Nature Trails', desc: 'Scenic hiking paths & Corbett nearby' },
+    { icon: '🍽️', label: 'Restaurant', desc: 'Multi-cuisine dining experience' },
+    { icon: '🧘', label: 'Yoga & Wellness', desc: 'Peaceful mountain retreat' },
+    { icon: '📱', label: 'High-speed WiFi', desc: 'Stay connected in nature' },
+    { icon: '🎯', label: '24/7 Support', desc: 'Round-the-clock service' }
+  ]
+
+  const roomTypes = [
+    { 
+      type: 'AC', 
+      price: 5000, 
+      desc: 'Full Air Conditioning, King Size Comfort Bed, Modern Amenities',
+      image: 'https://woodstonecorbett.com/img/room-01.jpg'
+    },
+    { 
+      type: 'Non-AC', 
+      price: 3000, 
+      desc: 'Natural Mountain Breeze, 24/7 Hot Water, Cozy Comfort',
+      image: 'https://woodstonecorbett.com/img/room-02.jpg'
+    }
+  ]
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-50 to-slate-900 text-slate-900">
+      {/* Header */}
+      <header className="border-b border-white/20 bg-white/10 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">🏨 Wood Stone Corbett</h1>
+            <p className="text-sm text-slate-600">Luxury Resort Escape</p>
+          </div>
+          <button
+            onClick={() => navigate('/admin')}
+            className="rounded-full bg-slate-900 px-6 py-2 text-sm font-medium text-white shadow-lg hover:bg-slate-800"
+          >
+            Admin / Owner Login
+          </button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative overflow-hidden rounded-3xl mx-4 sm:mx-6 lg:mx-8 my-6 shadow-2xl">
+        <img src="https://woodstonecorbett.com/img/site/corbett-fall.jpg" alt="Corbett" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/40" />
+        <div className="relative px-4 py-24 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              Your Perfect Himalayan Getaway
+            </h2>
+            <p className="mt-6 text-lg text-white/90">
+              Nestled in Chunakhan, Nainital. Experience luxury, nature, and exceptional hospitality near Corbett National Park.
+            </p>
+            <button
+              onClick={() => navigate('/book')}
+              className="mt-8 rounded-full bg-amber-500 px-8 py-4 font-bold text-lg text-white shadow-xl shadow-amber-500/30 hover:bg-amber-600 transition transform hover:scale-105"
+            >
+              Book Your Stay
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Amenities */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <h3 className="text-center text-3xl font-bold text-slate-900 mb-12">
+          World-Class Amenities
+        </h3>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {amenities.map((amenity, idx) => (
+            <div key={idx} className="rounded-2xl bg-white p-6 shadow-md hover:shadow-lg transition">
+              <div className="text-4xl mb-3">{amenity.icon}</div>
+              <h4 className="font-semibold text-slate-900">{amenity.label}</h4>
+              <p className="text-sm text-slate-600 mt-1">{amenity.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Room Types */}
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <h3 className="text-center text-3xl font-bold text-slate-900 mb-12">
+          Room Options
+        </h3>
+        <div className="grid gap-8 md:grid-cols-2">
+          {roomTypes.map((room, idx) => (
+            <div key={idx} className="rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition">
+              <img src={room.image} alt={room.type} className="w-full h-64 object-cover" />
+              <div className="bg-slate-900 text-white p-6">
+                <h4 className="text-2xl font-bold">{room.type} Room</h4>
+                <p className="text-amber-200 text-3xl font-bold mt-3">₹{room.price}</p>
+                <p className="text-sm text-slate-400 mt-1">per night</p>
+                <p className="text-slate-300 mt-4 text-sm">{room.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8 text-center">
+        <h3 className="text-3xl font-bold text-slate-900 mb-4">Ready to Book?</h3>
+        <p className="text-slate-600 mb-8">Reserve your dates now and experience the magic of Corbett.</p>
+        <button
+          onClick={() => navigate('/book')}
+          className="rounded-full bg-amber-500 px-8 py-3 font-semibold text-white shadow-lg shadow-amber-500/25 hover:bg-amber-600"
+        >
+          Book Now
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/20 bg-slate-900 text-white py-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm text-slate-400">© 2024 Wood Stone Corbett. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  )
+}

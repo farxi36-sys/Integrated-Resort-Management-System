@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:6.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: woodstone
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/woodstone
+      - JWT_SECRET=change_this
+      - PORT=5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo-data:

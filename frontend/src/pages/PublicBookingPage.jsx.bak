@@ -1,0 +1,345 @@
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import api from '../services/api'
+
+export default function PublicBookingPage() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const [rooms, setRooms] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
+  
+  const [formData, setFormData] = useState({
+    guest: {
+      name: '',
+      phone: '',
+      idProof: ''
+    },
+    roomType: 'AC',
+    checkIn: '',
+    checkOut: '',
+  })
+
+  // Get owner ID from URL parameter first, then localStorage or environment variable
+  const ownerId = searchParams.get('owner') || localStorage.getItem('ownerId') || import.meta.env.VITE_OWNER_ID || ''
+
+  useEffect(() => {
+    if (!ownerId) {
+      setError('Resort configuration missing. Please contact support.')
+      return
+    }
+    loadRooms()
+  }, [ownerId])
+
+  const loadRooms = async () => {
+    try {
+      // Public endpoint - no auth needed
+      const res = await api.get(`/rooms/owner/${ownerId}`)
+      setRooms(res.data.rooms || [])
+    } catch (err) {
+      console.error('Failed to load rooms', err)
+      setError('Could not load room information')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.')
+      setFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    if (!formData.guest.name || !formData.guest.phone) {
+      setError('Please fill in name and phone number')
+      return
+    }
+
+    if (!formData.checkIn || !formData.checkOut) {
+      setError('Please select check-in and check-out dates')
+      return
+    }
+
+    if (new Date(formData.checkIn) >= new Date(formData.checkOut)) {
+      setError('Check-out date must be after check-in date')
+      return
+    }
+
+    try {
+      // Public endpoint - no auth needed
+      await api.post('/booking/guest/create', {
+        guest: formData.guest,
+        roomType: formData.roomType,
+        checkIn: formData.checkIn,
+        checkOut: formData.checkOut,
+        ownerId
+      })
+
+      setSubmitted(true)
+      setFormData({
+        guest: { name: '', phone: '', idProof: '' },
+        roomType: 'AC',
+        checkIn: '',
+        checkOut: '',
+      })
+
+      setTimeout(() => {
+        navigate('/')
+      }, 3000)
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to submit booking')
+    }
+  }
+
+  if (!ownerId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-50 flex items-center justify-center px-4">
+        <div className="rounded-2xl bg-white p-8 text-center max-w-md shadow-lg">
+          <h2 className="text-2xl font-bold text-slate-900">Configuration Error</h2>
+          <p className="text-slate-600 mt-2">Resort configuration is missing. Please contact support.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="mt-6 rounded-full bg-slate-900 px-6 py-2 text-white font-medium hover:bg-slate-800"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-50 to-slate-900">
+      {/* Header */}
+      <header className="border-b border-white/20 bg-white/10 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <button
+            onClick={() => navigate('/')}
+            className="text-2xl font-bold tracking-tight text-slate-900 hover:text-amber-600"
+          >
+            🏨 Wood Stone Corbett
+          </button>
+          <button
+            onClick={() => navigate('/admin')}
+            className="rounded-full bg-slate-900 px-6 py-2 text-sm font-medium text-white shadow-lg hover:bg-slate-800"
+          >
+            Admin / Owner Login
+          </button>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        {submitted && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 backdrop-blur-sm">
+            <div className="rounded-2xl bg-white p-8 text-center max-w-md shadow-2xl">
+              <div className="text-5xl mb-4">✅</div>
+              <h2 className="text-2xl font-bold text-slate-900">Booking Submitted!</h2>
+              <p className="text-slate-600 mt-4">
+                Your booking request has been received. Our team will review and confirm your booking shortly.
+              </p>
+              <p className="text-sm text-slate-500 mt-4">Redirecting...</p>
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-12 lg:grid-cols-3">
+          {/* Booking Form */}
+          <div className="lg:col-span-2">
+            <div className="rounded-3xl bg-white p-8 shadow-xl">
+              <h1 className="text-4xl font-bold text-slate-900">Book Your Stay</h1>
+              <p className="text-slate-600 mt-2">Fill in your details to request a booking. We'll confirm availability shortly.</p>
+
+              <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                {error && (
+                  <div className="rounded-xl bg-red-50 p-4 text-red-700 text-sm">
+                    {error}
+                  </div>
+                )}
+
+                {/* Guest Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="guest.name"
+                    value={formData.guest.name}
+                    onChange={handleChange}
+                    placeholder="Your full name"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="guest.phone"
+                    value={formData.guest.phone}
+                    onChange={handleChange}
+                    placeholder="10-digit phone number"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* ID Proof */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">
+                    ID Proof (Passport, Aadhar, etc.)
+                  </label>
+                  <input
+                    type="text"
+                    name="guest.idProof"
+                    value={formData.guest.idProof}
+                    onChange={handleChange}
+                    placeholder="Your ID number"
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-amber-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Room Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2">
+                    Room Type *
+                  </label>
+                  <select
+                    name="roomType"
+                    value={formData.roomType}
+                    onChange={handleChange}
+                    className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-amber-500 focus:outline-none"
+                  >
+                    <option value="AC">AC - ₹5,000/night</option>
+                    <option value="Non-AC">Non-AC - ₹3,000/night</option>
+                  </select>
+                </div>
+
+                {/* Dates */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
+                      Check-in *
+                    </label>
+                    <input
+                      type="date"
+                      name="checkIn"
+                      value={formData.checkIn}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 mb-2">
+                      Check-out *
+                    </label>
+                    <input
+                      type="date"
+                      name="checkOut"
+                      value={formData.checkOut}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-slate-300 px-4 py-3 focus:border-amber-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-xl bg-amber-500 px-6 py-3 font-semibold text-white shadow-lg shadow-amber-500/25 hover:bg-amber-600 disabled:opacity-50"
+                >
+                  {loading ? 'Loading...' : 'Submit Booking Request'}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Room Info Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-6 space-y-4">
+              <div className="rounded-3xl bg-white p-6 shadow-xl">
+                <h2 className="text-xl font-bold text-slate-900 mb-4">Our Rooms</h2>
+                
+                <div className="space-y-4">
+                  {[
+                    { type: 'AC', price: 5000, image: 'https://woodstonecorbett.com/img/room-01.jpg', desc: 'Full AC, King Bed, Modern Amenities' },
+                    { type: 'Non-AC', price: 3000, image: 'https://woodstonecorbett.com/img/room-02.jpg', desc: 'Mountain Breeze, 24/7 Hot Water' }
+                  ].map((room, idx) => (
+                    <div key={idx} className="rounded-xl overflow-hidden border border-slate-200 hover:shadow-lg transition">
+                      <img src={room.image} alt={room.type} className="w-full h-36 object-cover" />
+                      <div className="p-3 bg-gradient-to-b from-white to-slate-50">
+                        <h3 className="font-bold text-slate-900">{room.type} Room</h3>
+                        <p className="text-xs text-slate-600 mt-1">{room.desc}</p>
+                        <p className="text-lg font-bold text-amber-600 mt-2">₹{room.price}/night</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gallery Preview */}
+              <div className="rounded-3xl bg-white p-6 shadow-xl">
+                <h3 className="font-bold text-slate-900 mb-3">📸 Gallery</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <img src="https://woodstonecorbett.com/img/gallery/img-001.jpg" alt="Gallery 1" className="w-full h-24 object-cover rounded-lg hover:scale-105 transition" />
+                  <img src="https://woodstonecorbett.com/img/gallery/img-002.jpg" alt="Gallery 2" className="w-full h-24 object-cover rounded-lg hover:scale-105 transition" />
+                  <img src="https://woodstonecorbett.com/img/site/corbett-fall.jpg" alt="Corbett" className="w-full h-24 object-cover rounded-lg hover:scale-105 transition" />
+                  <img src="https://woodstonecorbett.com/img/site/nainital.jpg" alt="Nainital" className="w-full h-24 object-cover rounded-lg hover:scale-105 transition" />
+                </div>
+              </div>
+
+              {/* Location Card */}
+              <div className="rounded-3xl bg-amber-50 border border-amber-200 p-6">
+                <h3 className="font-bold text-slate-900 mb-2">📍 Location</h3>
+                <p className="text-sm text-slate-700">Chunakhan, Near Gurudwara, Nainital</p>
+                <div className="mt-4 pt-4 border-t border-amber-200">
+                  <h4 className="font-bold text-sm text-slate-900 mb-2">Nearby Attractions:</h4>
+                  <ul className="text-xs space-y-1 text-slate-700">
+                    <li>✓ Corbett National Park - 20 km</li>
+                    <li>✓ Corbett Falls - 5 km</li>
+                    <li>✓ Nainital Lake - 35 km</li>
+                    <li>✓ Hanuman Dham - 7 km</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Info Card */}
+              <div className="rounded-3xl bg-slate-900 text-white p-6 shadow-xl">
+                <h3 className="font-bold mb-3">✨ Why Choose Us</h3>
+                <ul className="text-xs space-y-2 text-slate-300">
+                  <li>✓ Free cancellation up to 24 hours</li>
+                  <li>✓ Breakfast included</li>
+                  <li>✓ High-speed WiFi</li>
+                  <li>✓ 24/7 guest support</li>
+                  <li>✓ Mountain views</li>
+                  <li>✓ Multi-cuisine restaurant</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
