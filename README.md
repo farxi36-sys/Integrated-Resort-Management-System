@@ -91,18 +91,7 @@ Some important endpoints:
 - `POST /payment/add`
 - `GET /dashboard/stats`
 
-## Screenshots
 
-Add screenshots in this section for a better GitHub page preview.
-
-Recommended screenshots:
-
-- Public landing page
-- Booking page
-- Admin login page
-- Admin dashboard
-- Invoices page
-- Expense tracking page
 
 ## Future Improvements
 
